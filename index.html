@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hipoteca Aguilar - Ruiz | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brutalYellow: '#F3F231',
+                        brutalIndigo: '#6366f1',
+                        brutalGreen: '#22c55e',
+                        brutalRose: '#f43f5e',
+                        brutalBlack: '#000000',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;700;900&display=swap');
+        
+        body { 
+            font-family: 'Public Sans', sans-serif; 
+            transition: background-color 0.2s ease;
+        }
+
+        .neo-brutal {
+            border: 3px solid #000;
+            box-shadow: 6px 6px 0px 0px #000;
+            transition: all 0.1s ease;
+        }
+
+        .neo-brutal:active:not(table) {
+            transform: translate(3px, 3px);
+            box-shadow: 3px 3px 0px 0px #000;
+        }
+
+        .dark .neo-brutal {
+            border-color: #ffffff;
+            box-shadow: 6px 6px 0px 0px #ffffff;
+        }
+
+        .dark .neo-brutal:active:not(table) {
+            box-shadow: 3px 3px 0px 0px #ffffff;
+        }
+
+        .tab-active {
+            background-color: #000 !important;
+            color: #fff !important;
+        }
+        
+        .dark .tab-active {
+            background-color: #fff !important;
+            color: #000 !important;
+        }
+    </style>
+</head>
+<body class="bg-brutalYellow dark:bg-slate-900 min-h-screen pb-12 transition-colors duration-300">
+
+    <div class="max-w-6xl mx-auto px-4 pt-8">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center bg-white dark:bg-slate-800 p-8 neo-brutal mb-10 gap-6">
+            <div class="flex items-center gap-5">
+                <div class="bg-brutalIndigo text-white p-4 neo-brutal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-black text-black dark:text-white uppercase tracking-tighter italic">Hipoteca familiar</h1>
+                    <p class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mt-1">Familia Aguilar - Ruiz</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button onclick="toggleDarkMode()" class="p-3 neo-brutal bg-white dark:bg-slate-700 font-bold text-black dark:text-white flex items-center gap-2">
+                    <span id="theme-icon">🌙</span>
+                </button>
+
+                <div class="flex bg-white dark:bg-slate-700 p-1 border-2 border-black dark:border-white overflow-hidden" id="selector">
+                    <button onclick="update('ALL')" id="btn-ALL" class="px-5 py-2 text-xs font-black uppercase tab-active transition-all">Global</button>
+                    <button onclick="update('PH410')" id="btn-PH410" class="px-5 py-2 text-xs font-black uppercase hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all dark:text-white">PH410</button>
+                    <button onclick="update('PH412')" id="btn-PH412" class="px-5 py-2 text-xs font-black uppercase hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all dark:text-white">PH412</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+            <div class="bg-white dark:bg-slate-800 p-8 neo-brutal">
+                <p class="text-black dark:text-slate-400 text-xs font-black uppercase mb-3 italic">Saldo Actual Pendiente</p>
+                <p class="text-4xl font-black text-black dark:text-white tracking-tighter" id="val-p">0,00 €</p>
+            </div>
+            <div class="bg-brutalGreen p-8 neo-brutal">
+                <p class="text-black text-xs font-black uppercase mb-3 italic">Cuota Mensual Total</p>
+                <p class="text-4xl font-black text-black tracking-tighter" id="val-c">0,00 €</p>
+            </div>
+            <div class="bg-brutalRose p-8 neo-brutal">
+                <p class="text-black text-xs font-black uppercase mb-3 italic">Intereses Próximo Pago</p>
+                <p class="text-4xl font-black text-black tracking-tighter" id="val-i">0,00 €</p>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-10">
+            <div class="bg-white dark:bg-slate-800 p-8 neo-brutal h-[400px]">
+                <h3 class="font-black text-black dark:text-white mb-6 uppercase italic tracking-tighter border-b-4 border-brutalYellow inline-block">Proyección de Deuda</h3>
+                <div class="h-64"><canvas id="lineChart"></canvas></div>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-8 neo-brutal h-[400px]">
+                <h3 class="font-black text-black dark:text-white mb-6 uppercase italic tracking-tighter border-b-4 border-brutalGreen inline-block">Distribución Cuota</h3>
+                <div class="h-64"><canvas id="barChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white dark:bg-slate-800 neo-brutal overflow-hidden">
+            <div class="p-6 bg-black dark:bg-white text-white dark:text-black font-black uppercase italic tracking-widest text-sm flex justify-between items-center">
+                <span>Calendario de Amortización</span>
+                <span class="text-[10px] opacity-70">Sincronizado con Spreadsheet</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left font-bold">
+                    <thead class="bg-slate-100 dark:bg-slate-700 border-b-4 border-black dark:border-white">
+                        <tr class="text-black dark:text-white text-xs uppercase italic">
+                            <th class="px-8 py-5">Fecha de Pago</th>
+                            <th class="px-8 py-5 text-right">Recibo</th>
+                            <th class="px-8 py-5 text-right">Capital</th>
+                            <th class="px-8 py-5 text-right">Interés</th>
+                            <th class="px-8 py-5 text-right">Pendiente Post-Pago</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="text-black dark:text-white">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DATOS AJUSTADOS SEGÚN SOLICITUD DE MALAKA
+        // PH410 ajustada a 158.904,60 €
+        const initialBalances = {
+            PH410: 158904.60,
+            PH412: 100492.45
+        };
+
+        const raw = {
+            PH410: [
+                { d: new Date(2026, 2, 21), f: "21 Mar", i: 340.19, a: 462.03, p: 158442.57 },
+                { d: new Date(2026, 3, 21), f: "21 Abr", i: 339.20, a: 463.02, p: 157979.55 },
+                { d: new Date(2026, 4, 21), f: "21 May", i: 338.21, a: 464.01, p: 157515.54 },
+                { d: new Date(2026, 5, 21), f: "21 Jun", i: 337.21, a: 465.01, p: 157050.53 },
+                { d: new Date(2026, 6, 21), f: "21 Jul", i: 336.22, a: 466.00, p: 156584.53 },
+                { d: new Date(2026, 7, 21), f: "21 Ago", i: 335.22, a: 467.00, p: 156117.53 }
+            ],
+            PH412: [
+                { d: new Date(2026, 2, 21), f: "21 Mar", i: 207.60, a: 295.28, p: 100197.17 },
+                { d: new Date(2026, 3, 21), f: "21 Abr", i: 206.99, a: 295.89, p: 99901.28 },
+                { d: new Date(2026, 4, 21), f: "21 May", i: 206.38, a: 296.50, p: 99604.78 },
+                { d: new Date(2026, 5, 21), f: "21 Jun", i: 205.77, a: 297.11, p: 99307.67 },
+                { d: new Date(2026, 6, 21), f: "21 Jul", i: 205.15, a: 297.73, p: 99009.94 },
+                { d: new Date(2026, 7, 21), f: "21 Ago", i: 204.54, a: 298.34, p: 98711.60 }
+            ]
+        };
+
+        let chLine, chBar;
+        const fmt = v => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v);
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            document.getElementById('theme-icon').innerText = isDark ? '☀️' : '🌙';
+            update(currentMode);
+        }
+
+        let currentMode = 'ALL';
+
+        function update(mode) {
+            currentMode = mode;
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#ffffff' : '#000000';
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+            document.querySelectorAll('#selector button').forEach(b => b.classList.remove('tab-active'));
+            document.getElementById('btn-' + mode).classList.add('tab-active');
+
+            const today = new Date();
+            const firstOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+            let ds = [];
+            let startBalance = 0;
+
+            if(mode === 'ALL') {
+                startBalance = initialBalances.PH410 + initialBalances.PH412;
+                ds = raw.PH410.map((d, i) => ({
+                    d: d.d,
+                    f: d.f,
+                    i: d.i + raw.PH412[i].i,
+                    a: d.a + raw.PH412[i].a,
+                    p: d.p + raw.PH412[i].p,
+                    c: (d.i + d.a) + (raw.PH412[i].i + raw.PH412[i].a)
+                }));
+            } else {
+                startBalance = initialBalances[mode];
+                ds = raw[mode].map(d => ({...d, c: d.i + d.a}));
+            }
+
+            const filteredDs = ds.filter(item => item.d >= firstOfCurrentMonth);
+
+            if (filteredDs.length === 0) {
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="p-8 text-center uppercase font-black">Calendario completado</td></tr>';
+                return;
+            }
+
+            let displayPendiente = startBalance;
+            if (filteredDs[0].d > ds[0].d) {
+                const firstVisibleIdx = ds.findIndex(item => item.d === filteredDs[0].d);
+                displayPendiente = ds[firstVisibleIdx - 1].p;
+            }
+
+            document.getElementById('val-p').innerText = fmt(displayPendiente);
+            document.getElementById('val-c').innerText = fmt(filteredDs[0].c);
+            document.getElementById('val-i').innerText = fmt(filteredDs[0].i);
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = filteredDs.map(row => `
+                <tr class="border-b border-black dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                    <td class="px-8 py-5 font-black uppercase text-xs">${row.f}</td>
+                    <td class="px-8 py-5 text-right font-black">${fmt(row.c)}</td>
+                    <td class="px-8 py-5 text-right text-brutalIndigo font-black">${fmt(row.a)}</td>
+                    <td class="px-8 py-5 text-right text-brutalRose font-black">${fmt(row.i)}</td>
+                    <td class="px-8 py-5 text-right font-black opacity-50 italic text-[11px]">${fmt(row.p)}</td>
+                </tr>
+            `).join('');
+
+            renderCharts(filteredDs, textColor, gridColor);
+        }
+
+        function renderCharts(ds, textColor, gridColor) {
+            const labels = ds.map(d => d.f);
+            if(chLine) chLine.destroy();
+            if(chBar) chBar.destroy();
+
+            chLine = new Chart(document.getElementById('lineChart'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        data: ds.map(d => d.p),
+                        borderColor: '#6366f1',
+                        borderWidth: 6,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#000',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        tension: 0
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { ticks: { color: textColor, font: { weight: 'bold' } }, grid: { color: gridColor, lineWidth: 2 } },
+                        x: { ticks: { color: textColor, font: { weight: 'bold' } }, grid: { display: false } }
+                    }
+                }
+            });
+
+            chBar = new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Interés', data: ds.map(d => d.i), backgroundColor: '#f43f5e', borderWidth: 3, borderColor: '#000' },
+                        { label: 'Capital', data: ds.map(d => d.a), backgroundColor: '#22c55e', borderWidth: 3, borderColor: '#000' }
+                    ]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { weight: 'black', size: 10 } } } },
+                    scales: { 
+                        x: { stacked: true, ticks: { color: textColor, font: { weight: 'bold' } }, grid: { display: false } },
+                        y: { stacked: true, ticks: { color: textColor, font: { weight: 'bold' } }, grid: { color: gridColor, lineWidth: 2 } }
+                    }
+                }
+            });
+        }
+
+        window.onload = () => update('ALL');
+    </script>
+</body>
+</html>
