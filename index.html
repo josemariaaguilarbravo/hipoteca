@@ -121,17 +121,17 @@
         <div class="bg-white dark:bg-slate-800 neo-brutal overflow-hidden">
             <div class="p-6 bg-black dark:bg-white text-white dark:text-black font-black uppercase italic tracking-widest text-sm flex justify-between items-center">
                 <span>Calendario de Amortización</span>
-                <span class="text-[10px] opacity-70">Sincronizado con Spreadsheet</span>
+                <span class="text-[10px] opacity-70">Actualizado Automáticamente</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left font-bold">
                     <thead class="bg-slate-100 dark:bg-slate-700 border-b-4 border-black dark:border-white">
                         <tr class="text-black dark:text-white text-xs uppercase italic">
-                            <th class="px-8 py-5">Fecha de Pago</th>
+                            <th class="px-8 py-5">Mes y Año</th>
                             <th class="px-8 py-5 text-right">Recibo</th>
                             <th class="px-8 py-5 text-right">Capital</th>
                             <th class="px-8 py-5 text-right">Interés</th>
-                            <th class="px-8 py-5 text-right">Pendiente Post-Pago</th>
+                            <th class="px-8 py-5 text-right">Pendiente</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="text-black dark:text-white">
@@ -142,8 +142,7 @@
     </div>
 
     <script>
-        // DATOS AJUSTADOS SEGÚN SOLICITUD DE MALAKA
-        // PH410 ajustada a 158.904,60 €
+        // DATOS AJUSTADOS: Saldo inicial antes del primer pago
         const initialBalances = {
             PH410: 158904.60,
             PH412: 100492.45
@@ -151,20 +150,20 @@
 
         const raw = {
             PH410: [
-                { d: new Date(2026, 2, 21), f: "21 Mar", i: 340.19, a: 462.03, p: 158442.57 },
-                { d: new Date(2026, 3, 21), f: "21 Abr", i: 339.20, a: 463.02, p: 157979.55 },
-                { d: new Date(2026, 4, 21), f: "21 May", i: 338.21, a: 464.01, p: 157515.54 },
-                { d: new Date(2026, 5, 21), f: "21 Jun", i: 337.21, a: 465.01, p: 157050.53 },
-                { d: new Date(2026, 6, 21), f: "21 Jul", i: 336.22, a: 466.00, p: 156584.53 },
-                { d: new Date(2026, 7, 21), f: "21 Ago", i: 335.22, a: 467.00, p: 156117.53 }
+                { d: new Date(2026, 2, 21), f: "Marzo 2026", i: 340.19, a: 462.03, p: 158442.57 },
+                { d: new Date(2026, 3, 21), f: "Abril 2026", i: 339.20, a: 463.02, p: 157979.55 },
+                { d: new Date(2026, 4, 21), f: "Mayo 2026", i: 338.21, a: 464.01, p: 157515.54 },
+                { d: new Date(2026, 5, 21), f: "Junio 2026", i: 337.21, a: 465.01, p: 157050.53 },
+                { d: new Date(2026, 6, 21), f: "Julio 2026", i: 336.22, a: 466.00, p: 156584.53 },
+                { d: new Date(2026, 7, 21), f: "Agosto 2026", i: 335.22, a: 467.00, p: 156117.53 }
             ],
             PH412: [
-                { d: new Date(2026, 2, 21), f: "21 Mar", i: 207.60, a: 295.28, p: 100197.17 },
-                { d: new Date(2026, 3, 21), f: "21 Abr", i: 206.99, a: 295.89, p: 99901.28 },
-                { d: new Date(2026, 4, 21), f: "21 May", i: 206.38, a: 296.50, p: 99604.78 },
-                { d: new Date(2026, 5, 21), f: "21 Jun", i: 205.77, a: 297.11, p: 99307.67 },
-                { d: new Date(2026, 6, 21), f: "21 Jul", i: 205.15, a: 297.73, p: 99009.94 },
-                { d: new Date(2026, 7, 21), f: "21 Ago", i: 204.54, a: 298.34, p: 98711.60 }
+                { d: new Date(2026, 2, 21), f: "Marzo 2026", i: 207.60, a: 295.28, p: 100197.17 },
+                { d: new Date(2026, 3, 21), f: "Abril 2026", i: 206.99, a: 295.89, p: 99901.28 },
+                { d: new Date(2026, 4, 21), f: "Mayo 2026", i: 206.38, a: 296.50, p: 99604.78 },
+                { d: new Date(2026, 5, 21), f: "Junio 2026", i: 205.77, a: 297.11, p: 99307.67 },
+                { d: new Date(2026, 6, 21), f: "Julio 2026", i: 205.15, a: 297.73, p: 99009.94 },
+                { d: new Date(2026, 7, 21), f: "Agosto 2026", i: 204.54, a: 298.34, p: 98711.60 }
             ]
         };
 
@@ -210,6 +209,7 @@
                 ds = raw[mode].map(d => ({...d, c: d.i + d.a}));
             }
 
+            // Filtrado automático para no mostrar meses pasados
             const filteredDs = ds.filter(item => item.d >= firstOfCurrentMonth);
 
             if (filteredDs.length === 0) {
@@ -217,6 +217,7 @@
                 return;
             }
 
+            // Lógica para mostrar el saldo pendiente actual antes de los pagos futuros
             let displayPendiente = startBalance;
             if (filteredDs[0].d > ds[0].d) {
                 const firstVisibleIdx = ds.findIndex(item => item.d === filteredDs[0].d);
@@ -267,7 +268,7 @@
                     plugins: { legend: { display: false } },
                     scales: { 
                         y: { ticks: { color: textColor, font: { weight: 'bold' } }, grid: { color: gridColor, lineWidth: 2 } },
-                        x: { ticks: { color: textColor, font: { weight: 'bold' } }, grid: { display: false } }
+                        x: { ticks: { color: textColor, font: { weight: 'bold', size: 10 } }, grid: { display: false } }
                     }
                 }
             });
@@ -286,7 +287,7 @@
                     maintainAspectRatio: false, 
                     plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { weight: 'black', size: 10 } } } },
                     scales: { 
-                        x: { stacked: true, ticks: { color: textColor, font: { weight: 'bold' } }, grid: { display: false } },
+                        x: { stacked: true, ticks: { color: textColor, font: { weight: 'bold', size: 10 } }, grid: { display: false } },
                         y: { stacked: true, ticks: { color: textColor, font: { weight: 'bold' } }, grid: { color: gridColor, lineWidth: 2 } }
                     }
                 }
