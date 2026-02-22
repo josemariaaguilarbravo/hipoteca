@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hipoteca Aguilar - Ruiz | Dashboard</title>
+    
+    <!-- Favicon gracioso: Casita-Hucha con Gafas de Sol -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='10' y='40' width='80' height='50' fill='%23F3F231' stroke='black' stroke-width='6'/><path d='M10 40 L50 10 L90 40 Z' fill='%236366f1' stroke='black' stroke-width='6'/><rect x='40' y='18' width='20' height='4' fill='black'/><path d='M30 60 L45 60 M55 60 L70 60' stroke='black' stroke-width='8' stroke-linecap='round'/><path d='M40 75 Q50 82 60 75' stroke='black' stroke-width='4' fill='none' stroke-linecap='round'/></svg>">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -209,7 +213,6 @@
                 ds = raw[mode].map(d => ({...d, c: d.i + d.a}));
             }
 
-            // Filtrado automático para no mostrar meses pasados
             const filteredDs = ds.filter(item => item.d >= firstOfCurrentMonth);
 
             if (filteredDs.length === 0) {
@@ -217,7 +220,6 @@
                 return;
             }
 
-            // Lógica para mostrar el saldo pendiente actual antes de los pagos futuros
             let displayPendiente = startBalance;
             if (filteredDs[0].d > ds[0].d) {
                 const firstVisibleIdx = ds.findIndex(item => item.d === filteredDs[0].d);
