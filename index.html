@@ -128,11 +128,11 @@
         <!-- Charts Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-10">
             <div class="bg-white dark:bg-slate-800 p-8 neo-brutal h-[400px]">
-                <h3 class="font-black text-black dark:text-white mb-6 uppercase italic tracking-tighter border-b-4 border-brutalYellow inline-block">Estado de la Deuda</h3>
+                <h3 class="font-black text-black dark:text-white mb-6 uppercase italic tracking-tighter border-b-4 border-brutalYellow inline-block">Próximos 6 meses</h3>
                 <div class="h-64"><canvas id="lineChart"></canvas></div>
             </div>
             <div class="bg-white dark:bg-slate-800 p-8 neo-brutal h-[400px]">
-                <h3 class="font-black text-black dark:text-white mb-6 uppercase italic tracking-tighter border-b-4 border-brutalGreen inline-block">Capital vs Interés</h3>
+                <h3 class="font-black text-black dark:text-white mb-6 uppercase italic tracking-tighter border-b-4 border-brutalGreen inline-block">Estructura de Cuota</h3>
                 <div class="h-64"><canvas id="barChart"></canvas></div>
             </div>
         </div>
@@ -140,7 +140,7 @@
         <!-- Table -->
         <div class="bg-white dark:bg-slate-800 neo-brutal overflow-hidden">
             <div class="p-6 bg-black dark:bg-white text-white dark:text-black font-black uppercase italic tracking-widest text-sm flex justify-between items-center">
-                <span>Calendario de Pagos Dinámico</span>
+                <span>Calendario de Pagos Pendientes</span>
                 <span class="text-[10px] opacity-70 italic uppercase">Sincronizado</span>
             </div>
             <div class="overflow-x-auto">
@@ -174,17 +174,12 @@
         // Limpieza de números más estricta para evitar NaN
         const cleanNum = (str) => {
             if (!str) return 0;
-            // Quitamos todo lo que no sea dígito, coma o punto o signo menos
             let clean = str.replace(/[^-0-9,.]/g, '');
-            
-            // Si hay puntos y comas, asumimos formato europeo: 1.234,56
             if (clean.includes('.') && clean.includes(',')) {
                 clean = clean.replace(/\./g, '').replace(',', '.');
             } else if (clean.includes(',')) {
-                // Si solo hay comas, es el separador decimal
                 clean = clean.replace(',', '.');
             }
-            
             const num = parseFloat(clean);
             return isNaN(num) ? 0 : num;
         };
@@ -193,7 +188,6 @@
             if (!str) return new Date();
             const parts = str.split('/');
             if (parts.length === 3) {
-                // Aseguramos que el año sea completo (2026)
                 let year = parts[2].trim();
                 if (year.length === 2) year = '20' + year;
                 return new Date(parseInt(year), parseInt(parts[1]) - 1, parseInt(parts[0]));
@@ -201,7 +195,6 @@
             return new Date();
         };
 
-        // Parser de CSV manual para evitar errores con comas dentro de celdas
         function parseCSV(text) {
             const result = [];
             const lines = text.split(/\r?\n/);
@@ -229,7 +222,6 @@
 
         async function init() {
             try {
-                // Añadimos un pequeño timestamp para evitar el caché del navegador
                 const cacheBuster = `&t=${new Date().getTime()}`;
                 const response = await fetch(SHEET_CSV_URL + cacheBuster);
                 
@@ -238,12 +230,11 @@
                 const csvText = await response.text();
                 const rows = parseCSV(csvText);
                 
-                if (rows.length < 2) throw new Error("El archivo CSV está vacío o no tiene el formato correcto.");
+                if (rows.length < 2) throw new Error("El archivo CSV está vacío.");
 
                 fullData = { PH410: [], PH412: [] };
 
                 rows.forEach((row, idx) => {
-                    // Ignoramos cabecera o filas cortas
                     if (idx === 0 || row.length < 5) return; 
                     
                     const prestamo = (row[0] || '').toUpperCase();
@@ -266,22 +257,17 @@
                     else if (prestamo.includes('PH412')) fullData.PH412.push(item);
                 });
 
-                // Si no hay datos después del parseo
-                if (fullData.PH410.length === 0 && fullData.PH412.length === 0) {
-                    throw new Error("No se han detectado datos de PH410 o PH412. Revisa la primera columna de tu Excel.");
-                }
-
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
 
                 updateView('ALL');
             } catch (error) {
-                console.error("Error detallado:", error);
+                console.error("Error:", error);
                 document.getElementById('loader').innerHTML = `
-                    <div class="bg-white p-8 neo-brutal max-w-md">
+                    <div class="bg-white p-8 neo-brutal max-w-md text-center">
                         <p class="text-brutalRose font-black text-xl mb-4 italic uppercase">¡Atención, Malaka!</p>
                         <p class="text-sm font-bold text-black mb-6">Error: ${error.message}</p>
-                        <button onclick="location.reload()" class="w-full bg-brutalIndigo text-white p-4 neo-brutal font-black uppercase text-xs">Reintentar conexión</button>
+                        <button onclick="location.reload()" class="w-full bg-brutalIndigo text-white p-4 neo-brutal font-black uppercase text-xs">Reintentar</button>
                     </div>`;
             }
         }
@@ -324,16 +310,16 @@
                 ds = fullData[mode].sort((a,b) => a.d - b.d);
             }
 
-            // Filtro dinámico por fecha
+            // Filtro dinámico: desde hoy en adelante
             const filtered = ds.filter(item => item.d >= firstOfCurrentMonth);
 
             if (filtered.length > 0) {
-                // Actualizar tarjetas
+                // Métricas principales (del próximo recibo)
                 document.getElementById('val-p').innerText = fmt(filtered[0].p + filtered[0].a);
                 document.getElementById('val-c').innerText = fmt(filtered[0].c);
                 document.getElementById('val-i').innerText = fmt(filtered[0].i);
 
-                // Actualizar tabla
+                // --- TABLA: Mostramos todos los pendientes futuros ---
                 const tbody = document.getElementById('tableBody');
                 tbody.innerHTML = filtered.map(row => {
                     const monthName = row.d.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
@@ -347,9 +333,10 @@
                     </tr>
                 `}).join('');
 
-                renderCharts(filtered, textColor, gridColor);
+                // --- GRÁFICOS: Solo mostramos los próximos 6 meses ---
+                const next6Months = filtered.slice(0, 6);
+                renderCharts(next6Months, textColor, gridColor);
             } else if (ds.length > 0) {
-                // Si hay datos pero todos son pasados, mostramos el último
                 const last = ds[ds.length-1];
                 document.getElementById('val-p').innerText = fmt(last.p);
                 document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="p-8 text-center font-black italic opacity-50">Calendario finalizado</td></tr>';
@@ -369,7 +356,7 @@
                         data: ds.map(d => d.p),
                         borderColor: '#6366f1',
                         borderWidth: 6,
-                        pointRadius: 5,
+                        pointRadius: 6,
                         pointBackgroundColor: '#000',
                         pointBorderColor: '#fff',
                         pointBorderWidth: 2,
