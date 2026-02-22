@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hipoteca Aguilar - Ruiz | Dashboard</title>
+    <title>Hipoteca Aguilar - Ruiz | Live Dashboard</title>
     
-    <!-- Favicon gracioso: Casita-Hucha con Gafas de Sol -->
+    <!-- Favicon Casita-Hucha con Gafas de Sol -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='10' y='40' width='80' height='50' fill='%23F3F231' stroke='black' stroke-width='6'/><path d='M10 40 L50 10 L90 40 Z' fill='%236366f1' stroke='black' stroke-width='6'/><rect x='40' y='18' width='20' height='4' fill='black'/><path d='M30 60 L45 60 M55 60 L70 60' stroke='black' stroke-width='8' stroke-linecap='round'/><path d='M40 75 Q50 82 60 75' stroke='black' stroke-width='4' fill='none' stroke-linecap='round'/></svg>">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -50,10 +50,6 @@
             box-shadow: 6px 6px 0px 0px #ffffff;
         }
 
-        .dark .neo-brutal:active:not(table) {
-            box-shadow: 3px 3px 0px 0px #ffffff;
-        }
-
         .tab-active {
             background-color: #000 !important;
             color: #fff !important;
@@ -63,11 +59,31 @@
             background-color: #fff !important;
             color: #000 !important;
         }
+
+        #loader {
+            display: flex;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #F3F231;
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 1.5rem;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
     </style>
 </head>
-<body class="bg-brutalYellow dark:bg-slate-900 min-h-screen pb-12 transition-colors duration-300">
+<body class="bg-brutalYellow dark:bg-slate-900 min-h-screen pb-12 transition-colors duration-300 overflow-x-hidden">
 
-    <div class="max-w-6xl mx-auto px-4 pt-8">
+    <div id="loader">
+        <div class="neo-brutal bg-white p-8 animate-bounce uppercase italic">Sincronizando tuberías de datos... ⚡</div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 pt-8 opacity-0 transition-opacity duration-500" id="main-content">
         <!-- Header -->
         <header class="flex flex-col md:flex-row justify-between items-center bg-white dark:bg-slate-800 p-8 neo-brutal mb-10 gap-6">
             <div class="flex items-center gap-5">
@@ -76,7 +92,7 @@
                 </div>
                 <div>
                     <h1 class="text-3xl font-black text-black dark:text-white uppercase tracking-tighter italic">Hipoteca familiar</h1>
-                    <p class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mt-1">Familia Aguilar - Ruiz</p>
+                    <p class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mt-1">Aguilar - Ruiz Live Sync ⚡</p>
                 </div>
             </div>
             
@@ -86,9 +102,9 @@
                 </button>
 
                 <div class="flex bg-white dark:bg-slate-700 p-1 border-2 border-black dark:border-white overflow-hidden" id="selector">
-                    <button onclick="update('ALL')" id="btn-ALL" class="px-5 py-2 text-xs font-black uppercase tab-active transition-all">Global</button>
-                    <button onclick="update('PH410')" id="btn-PH410" class="px-5 py-2 text-xs font-black uppercase hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all dark:text-white">PH410</button>
-                    <button onclick="update('PH412')" id="btn-PH412" class="px-5 py-2 text-xs font-black uppercase hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all dark:text-white">PH412</button>
+                    <button onclick="updateView('ALL')" id="btn-ALL" class="px-5 py-2 text-xs font-black uppercase tab-active transition-all">Global</button>
+                    <button onclick="updateView('PH410')" id="btn-PH410" class="px-5 py-2 text-xs font-black uppercase hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all dark:text-white">PH410</button>
+                    <button onclick="updateView('PH412')" id="btn-PH412" class="px-5 py-2 text-xs font-black uppercase hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all dark:text-white">PH412</button>
                 </div>
             </div>
         </header>
@@ -96,15 +112,15 @@
         <!-- Metrics -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
             <div class="bg-white dark:bg-slate-800 p-8 neo-brutal">
-                <p class="text-black dark:text-slate-400 text-xs font-black uppercase mb-3 italic">Saldo Actual Pendiente</p>
+                <p class="text-black dark:text-slate-400 text-xs font-black uppercase mb-3 italic tracking-widest">Saldo Pendiente</p>
                 <p class="text-4xl font-black text-black dark:text-white tracking-tighter" id="val-p">0,00 €</p>
             </div>
             <div class="bg-brutalGreen p-8 neo-brutal">
-                <p class="text-black text-xs font-black uppercase mb-3 italic">Cuota Mensual Total</p>
+                <p class="text-black text-xs font-black uppercase mb-3 italic tracking-widest">Recibo Mensual</p>
                 <p class="text-4xl font-black text-black tracking-tighter" id="val-c">0,00 €</p>
             </div>
             <div class="bg-brutalRose p-8 neo-brutal">
-                <p class="text-black text-xs font-black uppercase mb-3 italic">Intereses Próximo Pago</p>
+                <p class="text-black text-xs font-black uppercase mb-3 italic tracking-widest">Interés Próximo</p>
                 <p class="text-4xl font-black text-black tracking-tighter" id="val-i">0,00 €</p>
             </div>
         </div>
@@ -112,11 +128,11 @@
         <!-- Charts Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-10">
             <div class="bg-white dark:bg-slate-800 p-8 neo-brutal h-[400px]">
-                <h3 class="font-black text-black dark:text-white mb-6 uppercase italic tracking-tighter border-b-4 border-brutalYellow inline-block">Proyección de Deuda</h3>
+                <h3 class="font-black text-black dark:text-white mb-6 uppercase italic tracking-tighter border-b-4 border-brutalYellow inline-block">Estado de la Deuda</h3>
                 <div class="h-64"><canvas id="lineChart"></canvas></div>
             </div>
             <div class="bg-white dark:bg-slate-800 p-8 neo-brutal h-[400px]">
-                <h3 class="font-black text-black dark:text-white mb-6 uppercase italic tracking-tighter border-b-4 border-brutalGreen inline-block">Distribución Cuota</h3>
+                <h3 class="font-black text-black dark:text-white mb-6 uppercase italic tracking-tighter border-b-4 border-brutalGreen inline-block">Capital vs Interés</h3>
                 <div class="h-64"><canvas id="barChart"></canvas></div>
             </div>
         </div>
@@ -124,16 +140,16 @@
         <!-- Table -->
         <div class="bg-white dark:bg-slate-800 neo-brutal overflow-hidden">
             <div class="p-6 bg-black dark:bg-white text-white dark:text-black font-black uppercase italic tracking-widest text-sm flex justify-between items-center">
-                <span>Calendario de Amortización</span>
-                <span class="text-[10px] opacity-70">Actualizado Automáticamente</span>
+                <span>Calendario de Pagos Dinámico</span>
+                <span class="text-[10px] opacity-70 italic uppercase">Sincronizado</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left font-bold">
                     <thead class="bg-slate-100 dark:bg-slate-700 border-b-4 border-black dark:border-white">
                         <tr class="text-black dark:text-white text-xs uppercase italic">
-                            <th class="px-8 py-5">Mes y Año</th>
-                            <th class="px-8 py-5 text-right">Recibo</th>
-                            <th class="px-8 py-5 text-right">Capital</th>
+                            <th class="px-8 py-5">Periodo</th>
+                            <th class="px-8 py-5 text-right">Cuota</th>
+                            <th class="px-8 py-5 text-right">Amortización</th>
                             <th class="px-8 py-5 text-right">Interés</th>
                             <th class="px-8 py-5 text-right">Pendiente</th>
                         </tr>
@@ -146,44 +162,138 @@
     </div>
 
     <script>
-        // DATOS AJUSTADOS: Saldo inicial antes del primer pago
-        const initialBalances = {
-            PH410: 158904.60,
-            PH412: 100492.45
-        };
+        // URL corregida por Malaka
+        const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSXVYB9w4yG0CT6nmmx7aI09O9f64sOWRQrULOOhsqBPryDRbXpxQzG3I4c4B3D8p1ik2CT3b49t1W0/pub?gid=0&single=true&output=csv';
 
-        const raw = {
-            PH410: [
-                { d: new Date(2026, 2, 21), f: "Marzo 2026", i: 340.19, a: 462.03, p: 158442.57 },
-                { d: new Date(2026, 3, 21), f: "Abril 2026", i: 339.20, a: 463.02, p: 157979.55 },
-                { d: new Date(2026, 4, 21), f: "Mayo 2026", i: 338.21, a: 464.01, p: 157515.54 },
-                { d: new Date(2026, 5, 21), f: "Junio 2026", i: 337.21, a: 465.01, p: 157050.53 },
-                { d: new Date(2026, 6, 21), f: "Julio 2026", i: 336.22, a: 466.00, p: 156584.53 },
-                { d: new Date(2026, 7, 21), f: "Agosto 2026", i: 335.22, a: 467.00, p: 156117.53 }
-            ],
-            PH412: [
-                { d: new Date(2026, 2, 21), f: "Marzo 2026", i: 207.60, a: 295.28, p: 100197.17 },
-                { d: new Date(2026, 3, 21), f: "Abril 2026", i: 206.99, a: 295.89, p: 99901.28 },
-                { d: new Date(2026, 4, 21), f: "Mayo 2026", i: 206.38, a: 296.50, p: 99604.78 },
-                { d: new Date(2026, 5, 21), f: "Junio 2026", i: 205.77, a: 297.11, p: 99307.67 },
-                { d: new Date(2026, 6, 21), f: "Julio 2026", i: 205.15, a: 297.73, p: 99009.94 },
-                { d: new Date(2026, 7, 21), f: "Agosto 2026", i: 204.54, a: 298.34, p: 98711.60 }
-            ]
-        };
-
+        let fullData = { PH410: [], PH412: [] };
+        let currentMode = 'ALL';
         let chLine, chBar;
+
         const fmt = v => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v);
+
+        // Limpieza de números más estricta para evitar NaN
+        const cleanNum = (str) => {
+            if (!str) return 0;
+            // Quitamos todo lo que no sea dígito, coma o punto o signo menos
+            let clean = str.replace(/[^-0-9,.]/g, '');
+            
+            // Si hay puntos y comas, asumimos formato europeo: 1.234,56
+            if (clean.includes('.') && clean.includes(',')) {
+                clean = clean.replace(/\./g, '').replace(',', '.');
+            } else if (clean.includes(',')) {
+                // Si solo hay comas, es el separador decimal
+                clean = clean.replace(',', '.');
+            }
+            
+            const num = parseFloat(clean);
+            return isNaN(num) ? 0 : num;
+        };
+
+        const parseDate = (str) => {
+            if (!str) return new Date();
+            const parts = str.split('/');
+            if (parts.length === 3) {
+                // Aseguramos que el año sea completo (2026)
+                let year = parts[2].trim();
+                if (year.length === 2) year = '20' + year;
+                return new Date(parseInt(year), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            }
+            return new Date();
+        };
+
+        // Parser de CSV manual para evitar errores con comas dentro de celdas
+        function parseCSV(text) {
+            const result = [];
+            const lines = text.split(/\r?\n/);
+            for (let line of lines) {
+                if (!line.trim()) continue;
+                const cells = [];
+                let cell = '';
+                let insideQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"') {
+                        insideQuotes = !insideQuotes;
+                    } else if (char === ',' && !insideQuotes) {
+                        cells.push(cell.trim());
+                        cell = '';
+                    } else {
+                        cell += char;
+                    }
+                }
+                cells.push(cell.trim());
+                result.push(cells);
+            }
+            return result;
+        }
+
+        async function init() {
+            try {
+                // Añadimos un pequeño timestamp para evitar el caché del navegador
+                const cacheBuster = `&t=${new Date().getTime()}`;
+                const response = await fetch(SHEET_CSV_URL + cacheBuster);
+                
+                if (!response.ok) throw new Error("Google Sheets no responde. ¿Está publicado?");
+                
+                const csvText = await response.text();
+                const rows = parseCSV(csvText);
+                
+                if (rows.length < 2) throw new Error("El archivo CSV está vacío o no tiene el formato correcto.");
+
+                fullData = { PH410: [], PH412: [] };
+
+                rows.forEach((row, idx) => {
+                    // Ignoramos cabecera o filas cortas
+                    if (idx === 0 || row.length < 5) return; 
+                    
+                    const prestamo = (row[0] || '').toUpperCase();
+                    const fechaStr = row[1] || '';
+                    const intereses = cleanNum(row[2]);
+                    const amortizacion = cleanNum(row[3]);
+                    const cuota = cleanNum(row[4]);
+                    const pendiente = cleanNum(row[5]);
+
+                    const item = {
+                        d: parseDate(fechaStr),
+                        f: fechaStr,
+                        i: intereses,
+                        a: amortizacion,
+                        p: pendiente,
+                        c: cuota
+                    };
+
+                    if (prestamo.includes('PH410')) fullData.PH410.push(item);
+                    else if (prestamo.includes('PH412')) fullData.PH412.push(item);
+                });
+
+                // Si no hay datos después del parseo
+                if (fullData.PH410.length === 0 && fullData.PH412.length === 0) {
+                    throw new Error("No se han detectado datos de PH410 o PH412. Revisa la primera columna de tu Excel.");
+                }
+
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('main-content').style.opacity = '1';
+
+                updateView('ALL');
+            } catch (error) {
+                console.error("Error detallado:", error);
+                document.getElementById('loader').innerHTML = `
+                    <div class="bg-white p-8 neo-brutal max-w-md">
+                        <p class="text-brutalRose font-black text-xl mb-4 italic uppercase">¡Atención, Malaka!</p>
+                        <p class="text-sm font-bold text-black mb-6">Error: ${error.message}</p>
+                        <button onclick="location.reload()" class="w-full bg-brutalIndigo text-white p-4 neo-brutal font-black uppercase text-xs">Reintentar conexión</button>
+                    </div>`;
+            }
+        }
 
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
             const isDark = document.documentElement.classList.contains('dark');
             document.getElementById('theme-icon').innerText = isDark ? '☀️' : '🌙';
-            update(currentMode);
+            updateView(currentMode);
         }
 
-        let currentMode = 'ALL';
-
-        function update(mode) {
+        function updateView(mode) {
             currentMode = mode;
             const isDark = document.documentElement.classList.contains('dark');
             const textColor = isDark ? '#ffffff' : '#000000';
@@ -196,56 +306,58 @@
             const firstOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
             let ds = [];
-            let startBalance = 0;
-
             if(mode === 'ALL') {
-                startBalance = initialBalances.PH410 + initialBalances.PH412;
-                ds = raw.PH410.map((d, i) => ({
-                    d: d.d,
-                    f: d.f,
-                    i: d.i + raw.PH412[i].i,
-                    a: d.a + raw.PH412[i].a,
-                    p: d.p + raw.PH412[i].p,
-                    c: (d.i + d.a) + (raw.PH412[i].i + raw.PH412[i].a)
-                }));
+                const allDates = [...new Set([...fullData.PH410.map(x => x.f), ...fullData.PH412.map(x => x.f)])];
+                ds = allDates.map(f => {
+                    const p1 = fullData.PH410.find(x => x.f === f) || {i:0, a:0, p:0, c:0, d: parseDate(f)};
+                    const p2 = fullData.PH412.find(x => x.f === f) || {i:0, a:0, p:0, c:0, d: parseDate(f)};
+                    return {
+                        d: p1.d,
+                        f: f,
+                        i: p1.i + p2.i,
+                        a: p1.a + p2.a,
+                        p: p1.p + p2.p,
+                        c: p1.c + p2.c
+                    };
+                }).sort((a,b) => a.d - b.d);
             } else {
-                startBalance = initialBalances[mode];
-                ds = raw[mode].map(d => ({...d, c: d.i + d.a}));
+                ds = fullData[mode].sort((a,b) => a.d - b.d);
             }
 
-            const filteredDs = ds.filter(item => item.d >= firstOfCurrentMonth);
+            // Filtro dinámico por fecha
+            const filtered = ds.filter(item => item.d >= firstOfCurrentMonth);
 
-            if (filteredDs.length === 0) {
-                document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="p-8 text-center uppercase font-black">Calendario completado</td></tr>';
-                return;
+            if (filtered.length > 0) {
+                // Actualizar tarjetas
+                document.getElementById('val-p').innerText = fmt(filtered[0].p + filtered[0].a);
+                document.getElementById('val-c').innerText = fmt(filtered[0].c);
+                document.getElementById('val-i').innerText = fmt(filtered[0].i);
+
+                // Actualizar tabla
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = filtered.map(row => {
+                    const monthName = row.d.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+                    return `
+                    <tr class="border-b border-black dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                        <td class="px-8 py-5 font-black uppercase text-xs">${monthName}</td>
+                        <td class="px-8 py-5 text-right font-black">${fmt(row.c)}</td>
+                        <td class="px-8 py-5 text-right text-brutalIndigo font-black">${fmt(row.a)}</td>
+                        <td class="px-8 py-5 text-right text-brutalRose font-black">${fmt(row.i)}</td>
+                        <td class="px-8 py-5 text-right font-black opacity-50 italic text-[11px]">${fmt(row.p)}</td>
+                    </tr>
+                `}).join('');
+
+                renderCharts(filtered, textColor, gridColor);
+            } else if (ds.length > 0) {
+                // Si hay datos pero todos son pasados, mostramos el último
+                const last = ds[ds.length-1];
+                document.getElementById('val-p').innerText = fmt(last.p);
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="p-8 text-center font-black italic opacity-50">Calendario finalizado</td></tr>';
             }
-
-            let displayPendiente = startBalance;
-            if (filteredDs[0].d > ds[0].d) {
-                const firstVisibleIdx = ds.findIndex(item => item.d === filteredDs[0].d);
-                displayPendiente = ds[firstVisibleIdx - 1].p;
-            }
-
-            document.getElementById('val-p').innerText = fmt(displayPendiente);
-            document.getElementById('val-c').innerText = fmt(filteredDs[0].c);
-            document.getElementById('val-i').innerText = fmt(filteredDs[0].i);
-
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = filteredDs.map(row => `
-                <tr class="border-b border-black dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                    <td class="px-8 py-5 font-black uppercase text-xs">${row.f}</td>
-                    <td class="px-8 py-5 text-right font-black">${fmt(row.c)}</td>
-                    <td class="px-8 py-5 text-right text-brutalIndigo font-black">${fmt(row.a)}</td>
-                    <td class="px-8 py-5 text-right text-brutalRose font-black">${fmt(row.i)}</td>
-                    <td class="px-8 py-5 text-right font-black opacity-50 italic text-[11px]">${fmt(row.p)}</td>
-                </tr>
-            `).join('');
-
-            renderCharts(filteredDs, textColor, gridColor);
         }
 
         function renderCharts(ds, textColor, gridColor) {
-            const labels = ds.map(d => d.f);
+            const labels = ds.map(d => d.d.toLocaleString('es-ES', { month: 'short', year: '2-digit' }));
             if(chLine) chLine.destroy();
             if(chBar) chBar.destroy();
 
@@ -257,7 +369,7 @@
                         data: ds.map(d => d.p),
                         borderColor: '#6366f1',
                         borderWidth: 6,
-                        pointRadius: 6,
+                        pointRadius: 5,
                         pointBackgroundColor: '#000',
                         pointBorderColor: '#fff',
                         pointBorderWidth: 2,
@@ -265,12 +377,11 @@
                     }]
                 },
                 options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: { 
-                        y: { ticks: { color: textColor, font: { weight: 'bold' } }, grid: { color: gridColor, lineWidth: 2 } },
-                        x: { ticks: { color: textColor, font: { weight: 'bold', size: 10 } }, grid: { display: false } }
+                        y: { ticks: { color: textColor, font: { weight: 'bold' }, callback: v => v/1000 + 'k' }, grid: { color: gridColor, lineWidth: 2 } },
+                        x: { ticks: { color: textColor, font: { weight: 'bold' } }, grid: { display: false } }
                     }
                 }
             });
@@ -285,18 +396,17 @@
                     ]
                 },
                 options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { weight: 'black', size: 10 } } } },
                     scales: { 
-                        x: { stacked: true, ticks: { color: textColor, font: { weight: 'bold', size: 10 } }, grid: { display: false } },
+                        x: { stacked: true, ticks: { color: textColor, font: { weight: 'bold' } }, grid: { display: false } },
                         y: { stacked: true, ticks: { color: textColor, font: { weight: 'bold' } }, grid: { color: gridColor, lineWidth: 2 } }
                     }
                 }
             });
         }
 
-        window.onload = () => update('ALL');
+        init();
     </script>
 </body>
 </html>
