@@ -11,6 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // Configuración de Tailwind para el estilo Neo-Brutalista
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -34,6 +35,7 @@
             transition: background-color 0.2s ease;
         }
 
+        /* Clases para el efecto Neo-Brutalista */
         .neo-brutal {
             border: 3px solid #000;
             box-shadow: 6px 6px 0px 0px #000;
@@ -79,8 +81,9 @@
 </head>
 <body class="bg-brutalYellow dark:bg-slate-900 min-h-screen pb-12 transition-colors duration-300 overflow-x-hidden">
 
+    <!-- Pantalla de carga -->
     <div id="loader">
-        <div class="neo-brutal bg-white p-8 animate-bounce uppercase italic">Sincronizando tuberías de datos... ⚡</div>
+        <div class="neo-brutal bg-white p-8 animate-bounce uppercase italic">Sincronizando con Google Sheets... ⚡</div>
     </div>
 
     <div class="max-w-6xl mx-auto px-4 pt-8 opacity-0 transition-opacity duration-500" id="main-content">
@@ -109,14 +112,14 @@
             </div>
         </header>
 
-        <!-- Metrics -->
+        <!-- Tarjetas de métricas -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
             <div class="bg-white dark:bg-slate-800 p-8 neo-brutal">
-                <p class="text-black dark:text-slate-400 text-xs font-black uppercase mb-3 italic tracking-widest">Saldo Pendiente</p>
+                <p class="text-black dark:text-slate-400 text-xs font-black uppercase mb-3 italic tracking-widest">Saldo Pendiente Real</p>
                 <p class="text-4xl font-black text-black dark:text-white tracking-tighter" id="val-p">0,00 €</p>
             </div>
             <div class="bg-brutalGreen p-8 neo-brutal">
-                <p class="text-black text-xs font-black uppercase mb-3 italic tracking-widest">Recibo Mensual</p>
+                <p class="text-black text-xs font-black uppercase mb-3 italic tracking-widest">Próxima Cuota</p>
                 <p class="text-4xl font-black text-black tracking-tighter" id="val-c">0,00 €</p>
             </div>
             <div class="bg-brutalRose p-8 neo-brutal">
@@ -125,23 +128,23 @@
             </div>
         </div>
 
-        <!-- Charts Row -->
+        <!-- Gráficos -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-10">
             <div class="bg-white dark:bg-slate-800 p-8 neo-brutal h-[400px]">
                 <h3 class="font-black text-black dark:text-white mb-6 uppercase italic tracking-tighter border-b-4 border-brutalYellow inline-block">Próximos 6 meses</h3>
                 <div class="h-64"><canvas id="lineChart"></canvas></div>
             </div>
             <div class="bg-white dark:bg-slate-800 p-8 neo-brutal h-[400px]">
-                <h3 class="font-black text-black dark:text-white mb-6 uppercase italic tracking-tighter border-b-4 border-brutalGreen inline-block">Estructura de Cuota</h3>
+                <h3 class="font-black text-black dark:text-white mb-6 uppercase italic tracking-tighter border-b-4 border-brutalGreen inline-block">Estructura Cuota</h3>
                 <div class="h-64"><canvas id="barChart"></canvas></div>
             </div>
         </div>
 
-        <!-- Table -->
+        <!-- Tabla de datos -->
         <div class="bg-white dark:bg-slate-800 neo-brutal overflow-hidden">
             <div class="p-6 bg-black dark:bg-white text-white dark:text-black font-black uppercase italic tracking-widest text-sm flex justify-between items-center">
-                <span>Calendario de Pagos Pendientes</span>
-                <span class="text-[10px] opacity-70 italic uppercase">Sincronizado</span>
+                <span>Calendario de Próximos Pagos</span>
+                <span class="text-[10px] opacity-70 italic uppercase tracking-widest">Live Sync</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left font-bold">
@@ -151,10 +154,10 @@
                             <th class="px-8 py-5 text-right">Cuota</th>
                             <th class="px-8 py-5 text-right">Amortización</th>
                             <th class="px-8 py-5 text-right">Interés</th>
-                            <th class="px-8 py-5 text-right">Pendiente</th>
+                            <th class="px-8 py-5 text-right">Pendiente Post-Pago</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody" class="text-black dark:text-white">
+                    <tbody id="tableBody" class="text-black dark:text-white text-sm">
                     </tbody>
                 </table>
             </div>
@@ -162,16 +165,17 @@
     </div>
 
     <script>
-        // URL corregida por Malaka
+        // URL pública de Google Sheets en formato CSV
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSXVYB9w4yG0CT6nmmx7aI09O9f64sOWRQrULOOhsqBPryDRbXpxQzG3I4c4B3D8p1ik2CT3b49t1W0/pub?gid=0&single=true&output=csv';
 
         let fullData = { PH410: [], PH412: [] };
+        let initialBalances = { PH410: 158904.60, PH412: 100492.45 };
         let currentMode = 'ALL';
         let chLine, chBar;
 
         const fmt = v => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v);
 
-        // Limpieza de números más estricta para evitar NaN
+        // Función para limpiar cadenas de texto y convertirlas en números usables
         const cleanNum = (str) => {
             if (!str) return 0;
             let clean = str.replace(/[^-0-9,.]/g, '');
@@ -195,6 +199,7 @@
             return new Date();
         };
 
+        // Parser manual de CSV para manejar correctamente comas y comillas
         function parseCSV(text) {
             const result = [];
             const lines = text.split(/\r?\n/);
@@ -205,9 +210,8 @@
                 let insideQuotes = false;
                 for (let i = 0; i < line.length; i++) {
                     const char = line[i];
-                    if (char === '"') {
-                        insideQuotes = !insideQuotes;
-                    } else if (char === ',' && !insideQuotes) {
+                    if (char === '"') insideQuotes = !insideQuotes;
+                    else if (char === ',' && !insideQuotes) {
                         cells.push(cell.trim());
                         cell = '';
                     } else {
@@ -222,21 +226,16 @@
 
         async function init() {
             try {
+                // Evitamos caché añadiendo un parámetro de tiempo
                 const cacheBuster = `&t=${new Date().getTime()}`;
                 const response = await fetch(SHEET_CSV_URL + cacheBuster);
-                
-                if (!response.ok) throw new Error("Google Sheets no responde. ¿Está publicado?");
-                
                 const csvText = await response.text();
                 const rows = parseCSV(csvText);
                 
-                if (rows.length < 2) throw new Error("El archivo CSV está vacío.");
-
                 fullData = { PH410: [], PH412: [] };
 
                 rows.forEach((row, idx) => {
                     if (idx === 0 || row.length < 5) return; 
-                    
                     const prestamo = (row[0] || '').toUpperCase();
                     const fechaStr = row[1] || '';
                     const intereses = cleanNum(row[2]);
@@ -263,12 +262,7 @@
                 updateView('ALL');
             } catch (error) {
                 console.error("Error:", error);
-                document.getElementById('loader').innerHTML = `
-                    <div class="bg-white p-8 neo-brutal max-w-md text-center">
-                        <p class="text-brutalRose font-black text-xl mb-4 italic uppercase">¡Atención, Malaka!</p>
-                        <p class="text-sm font-bold text-black mb-6">Error: ${error.message}</p>
-                        <button onclick="location.reload()" class="w-full bg-brutalIndigo text-white p-4 neo-brutal font-black uppercase text-xs">Reintentar</button>
-                    </div>`;
+                document.getElementById('loader').innerHTML = `<div class="bg-white p-8 neo-brutal">Error de conexión con la base de datos.</div>`;
             }
         }
 
@@ -288,38 +282,42 @@
             document.querySelectorAll('#selector button').forEach(b => b.classList.remove('tab-active'));
             document.getElementById('btn-' + mode).classList.add('tab-active');
 
+            // --- Lógica de filtrado dinámico por fecha ---
             const today = new Date();
-            const firstOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            today.setHours(0, 0, 0, 0); 
 
             let ds = [];
+            let startBal = 0;
             if(mode === 'ALL') {
+                startBal = initialBalances.PH410 + initialBalances.PH412;
                 const allDates = [...new Set([...fullData.PH410.map(x => x.f), ...fullData.PH412.map(x => x.f)])];
                 ds = allDates.map(f => {
                     const p1 = fullData.PH410.find(x => x.f === f) || {i:0, a:0, p:0, c:0, d: parseDate(f)};
                     const p2 = fullData.PH412.find(x => x.f === f) || {i:0, a:0, p:0, c:0, d: parseDate(f)};
-                    return {
-                        d: p1.d,
-                        f: f,
-                        i: p1.i + p2.i,
-                        a: p1.a + p2.a,
-                        p: p1.p + p2.p,
-                        c: p1.c + p2.c
-                    };
+                    return { d: p1.d, f: f, i: p1.i + p2.i, a: p1.a + p2.a, p: p1.p + p2.p, c: p1.c + p2.c };
                 }).sort((a,b) => a.d - b.d);
             } else {
+                startBal = initialBalances[mode];
                 ds = fullData[mode].sort((a,b) => a.d - b.d);
             }
 
-            // Filtro dinámico: desde hoy en adelante
-            const filtered = ds.filter(item => item.d >= firstOfCurrentMonth);
+            // Filtramos recibos que ya han vencido hoy
+            const filtered = ds.filter(item => item.d >= today);
 
             if (filtered.length > 0) {
-                // Métricas principales (del próximo recibo)
-                document.getElementById('val-p').innerText = fmt(filtered[0].p + filtered[0].a);
+                // Actualizamos el saldo pendiente según los pagos realizados
+                let saldoActual = startBal;
+                const firstVisibleDate = filtered[0].d;
+                const lastPaidIdx = ds.findIndex(item => item.d.getTime() === firstVisibleDate.getTime()) - 1;
+                
+                if (lastPaidIdx >= 0) {
+                    saldoActual = ds[lastPaidIdx].p;
+                }
+
+                document.getElementById('val-p').innerText = fmt(saldoActual);
                 document.getElementById('val-c').innerText = fmt(filtered[0].c);
                 document.getElementById('val-i').innerText = fmt(filtered[0].i);
 
-                // --- TABLA: Mostramos todos los pendientes futuros ---
                 const tbody = document.getElementById('tableBody');
                 tbody.innerHTML = filtered.map(row => {
                     const monthName = row.d.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
@@ -333,13 +331,11 @@
                     </tr>
                 `}).join('');
 
-                // --- GRÁFICOS: Solo mostramos los próximos 6 meses ---
+                // Limitamos los gráficos a los próximos 6 meses para mayor claridad
                 const next6Months = filtered.slice(0, 6);
                 renderCharts(next6Months, textColor, gridColor);
-            } else if (ds.length > 0) {
-                const last = ds[ds.length-1];
-                document.getElementById('val-p').innerText = fmt(last.p);
-                document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="p-8 text-center font-black italic opacity-50">Calendario finalizado</td></tr>';
+            } else {
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" class="p-8 text-center font-black italic">No hay pagos futuros pendientes.</td></tr>';
             }
         }
 
